@@ -13,10 +13,15 @@ __pycache__/
 node_modules/
 frontend/dist/
 
-# data (book PDFs are not committed; seed file is, if the repo is PRIVATE)
+# data (book PDFs and paper PDFs are never committed)
+*.pdf
 data/books/*
 !data/books/README.md
 !data/books/manifest.example.yaml
+!data/books/manifest.yaml
+data/papers/*
+!data/papers/README.md
+!data/papers/manifest.yaml
 data/uploads/
 reports/
 *.log

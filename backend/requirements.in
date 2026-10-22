@@ -16,3 +16,4 @@ typer
 rich
 pytest
 httpx
+sentence-transformers

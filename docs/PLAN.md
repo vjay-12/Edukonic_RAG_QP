@@ -31,7 +31,7 @@ STAGE 2  (teacher UI, generate only)
 
 ## 2. Stack and repo layout
 
-Backend: Python 3.11+, FastAPI, SQLAlchemy 2, Pydantic v2, Postgres 16 + pgvector (Docker), `google-genai` (Gemini), `pymupdf` + `pymupdf4llm`, `python-docx`, `typer` + `rich` (CLI), `tenacity` (retries), `pytest`.
+Backend: Python 3.11+, FastAPI, SQLAlchemy 2, Pydantic v2, Postgres 16 + pgvector (Docker), `sentence-transformers` (local embeddings with `BAAI/bge-base-en-v1.5`), `google-genai` (Gemini for generation/validation), `pymupdf` + `pymupdf4llm`, `python-docx`, `typer` + `rich` (CLI), `tenacity` (retries), `pytest`.
 Frontend: React 19 + Vite + TypeScript + Tailwind 4 + TanStack Query + React Router + framer-motion + lucide-react.
 
 ```
@@ -101,8 +101,8 @@ HNSW index on `chunks.embedding`; btree on `chunks.chapter_no`.
 2. Clean: drop running headers, footers, and page numbers; re-join hyphenated words; normalize whitespace and Unicode.
 3. Split on headings and section numbers (for example "5.1", "Activity 1.1", "Questions", "Exercises"). Never cross a section boundary.
 4. `content_type` rules: contains "Activity" → `activity`; "Questions" or "Exercises" → `exercise`; "Example" → `example`; "What you have learnt" or "Summary" → `summary`; else `concept`.
-5. Re-chunk long sections to about `CHUNK_TARGET_TOKENS` (max `CHUNK_MAX_TOKENS`) with `CHUNK_OVERLAP_TOKENS` overlap. Merge tiny fragments into neighbors.
-6. Embed in batches with retry and backoff (`llm.py`), then insert. Set document status `ready` only if all chunks are embedded.
+5. Re-chunk long sections to about `CHUNK_TARGET_TOKENS` (350 tokens, max `CHUNK_MAX_TOKENS` 480 tokens) with `CHUNK_OVERLAP_TOKENS` overlap, counted with the model tokenizer. Merge tiny fragments into neighbors.
+6. Embed with normalized embeddings (`llm.py`, GPU if available else CPU; BGE query prefix for search queries only, not for chunks), in batches of `EMBED_BATCH_SIZE` (32), then insert. Set document status `ready` only if all chunks are embedded.
 
 ### 3.4 Chunk QA report (`qa.py`) and quality gate
 
@@ -163,7 +163,7 @@ config → plan slots → for each batch of same-type slots:
 - **LLM validator** (same context, batched): returns `{grounded, answer_correct, marks_fit, single_correct_option, issues[], verdict}`. On `fail`, regenerate once with the issues appended; if it still fails, keep as `draft` flagged.
 - **Dedupe:** embed each stem; compare with the same paper, `question_bank`, and `reference_questions`; similarity above `DEDUPE_THRESHOLD` triggers regeneration with an instruction to use a different angle.
 - **Blueprint report:** marks per chapter, count per type, difficulty split, competency %, mark total check, number of flagged questions.
-- **LLM wrapper (`llm.py`)** is the only place that imports the Gemini SDK: `generate_json(prompt, schema, model)`, `embed(texts)`. Models and dimensions come from `.env`.
+- **LLM and embedding wrapper (`llm.py`)** encapsulates all AI models: `embed(texts, is_query=False)` (supports local `sentence-transformers` with normalized vectors, BGE query prefix for search queries, and fallback to `gemini`), and `generate_json(prompt, schema, model)` via Gemini SDK. Models, provider, and dimensions come from `.env`.
 
 ### 3.6 Blueprint presets (`configs/`)
 
@@ -243,9 +243,9 @@ Paper DOCX: school header, exam details, general instructions, section headings 
 ## 6. Build order for the agent
 
 1. Unzip the setup kit as the repo root; commit. Verify `docker compose up -d db` and the setup script.
-2. `config.py`, `db.py`, `models.py`, `llm.py` (one embedding call and one JSON generation call working).
-3. `chunker.py`, `ingest.py`, CLI `ingest`, `chunks list|show|report`, `search`. Run on the 3 pilot chapters. **Stop and show me the report.**
-4. `eval-retrieval` with `data/eval/retrieval_queries.yaml` (about 20 queries, fill from the chapters). Pass the gate.
+2. `config.py`, `db.py`, `models.py`, `llm.py` (local `sentence-transformers` embedding with `BAAI/bge-base-en-v1.5` and Gemini JSON generation working).
+3. `chunker.py` (model tokenizer, 350 target/480 max tokens), `ingest.py`, CLI `ingest`, `chunks list|show|report`, `search`. Run on the 3 pilot chapters. **Stop and show me the report.**
+4. `eval-retrieval` with `data/eval/retrieval_queries.yaml` (~20 queries with BGE search query prefix). Pass the gate and recalibrate `DEDUPE_THRESHOLD`.
 5. `planner`, `retrieval`, `generator`, `validator`, `dedupe`; CLI `generate` for the 25-mark preset. Review output together.
 6. API (`chapters`, `papers`, background generation, export) and `db export-seed|import-seed`.
 7. Teacher UI pages in the theme (Section 7). Order: `/generate`, progress and review, preview and export, history and bank.

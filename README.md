@@ -7,7 +7,8 @@ verified from the CLI; the web UI is only for teachers to generate papers.
 - Docker Desktop (for Postgres + pgvector)
 - Python 3.11+ (resolved on 3.12)
 - Node 20.19+ or 22.12+ (see `.nvmrc`)
-- A free Gemini API key: https://aistudio.google.com -> Get API key
+- Local embeddings powered by `sentence-transformers` (`BAAI/bge-base-en-v1.5`, 768-dim, CPU/GPU)
+- A free Gemini API key (for paper generation & validation): https://aistudio.google.com -> Get API key
 
 ## Setup (fresh clone)
 macOS / Linux / WSL / Git Bash:

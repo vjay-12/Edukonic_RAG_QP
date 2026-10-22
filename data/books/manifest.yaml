@@ -1,0 +1,15 @@
+# NCERT Class 10 Science Chapter Manifest
+# Please confirm edition_year below for your school's textbooks
+edition_year: 2026
+class: 10
+subject: Science
+chapters:
+  - file: class10/science/C1.pdf
+    chapter_no: 1
+    title: "Chemical Reactions and Equations"
+  - file: class10/science/C5.pdf
+    chapter_no: 5
+    title: "Life Processes"
+  - file: class10/science/C11.pdf
+    chapter_no: 11
+    title: "Electricity"

@@ -1,0 +1,18 @@
+# CBSE Sample Question Papers and Marking Schemes Manifest
+papers:
+  - file: Science-SQP.pdf
+    source_label: "CBSE Class 10 Science Sample Question Paper 2026-27"
+    year: "2026-27"
+    category: "cbse_sample_paper"
+    class: 10
+    subject: "Science"
+    code: "086"
+    max_marks: 80
+
+  - file: Science-MS.pdf
+    source_label: "CBSE Class 10 Science Marking Scheme 2026-27"
+    year: "2026-27"
+    category: "cbse_sample_marking_scheme"
+    class: 10
+    subject: "Science"
+    code: "086"

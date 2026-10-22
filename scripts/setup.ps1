@@ -14,6 +14,7 @@ docker compose up -d db
 Write-Host "==> Backend virtualenv + dependencies"
 python -m venv backend\.venv
 & backend\.venv\Scripts\python.exe -m pip install --upgrade pip
+& backend\.venv\Scripts\python.exe -m pip install torch --index-url https://download.pytorch.org/whl/cpu
 & backend\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
 
 Write-Host "==> Frontend dependencies"

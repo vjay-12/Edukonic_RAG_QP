@@ -17,6 +17,7 @@ python3 -m venv backend/.venv
 # shellcheck disable=SC1091
 source backend/.venv/bin/activate 2>/dev/null || source backend/.venv/Scripts/activate
 pip install --upgrade pip
+pip install torch --index-url https://download.pytorch.org/whl/cpu
 pip install -r backend/requirements.txt
 
 echo "==> Frontend dependencies"
