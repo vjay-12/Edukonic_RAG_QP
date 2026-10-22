@@ -1,0 +1,23 @@
+# env / secrets
+.env
+*.pem
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# node
+node_modules/
+frontend/dist/
+
+# data (book PDFs are not committed; seed file is, if the repo is PRIVATE)
+data/books/*
+!data/books/README.md
+!data/books/manifest.example.yaml
+data/uploads/
+reports/
+*.log
+.DS_Store

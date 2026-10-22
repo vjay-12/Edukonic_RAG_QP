@@ -1,0 +1,8 @@
+# Copy to manifest.yaml and edit. One entry per chapter PDF.
+edition_year: 2026          # the NCERT edition your school uses
+class: 10
+subject: Science
+chapters:
+  - { file: class10/science/ch01.pdf, chapter_no: 1,  title: "Chemical Reactions and Equations" }
+  - { file: class10/science/ch05.pdf, chapter_no: 5,  title: "Life Processes" }
+  - { file: class10/science/ch11.pdf, chapter_no: 11, title: "Electricity" }
