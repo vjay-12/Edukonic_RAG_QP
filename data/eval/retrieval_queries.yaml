@@ -1,0 +1,98 @@
+queries:
+  # Chapter 1: Chemical Reactions and Equations
+  - query: "How to balance a chemical equation step by step with law of conservation of mass"
+    expected_chapter: 1
+    page_start: 3
+    page_end: 6
+  - query: "Reaction between calcium oxide and water to form slaked lime"
+    expected_chapter: 1
+    page_start: 6
+    page_end: 8
+  - query: "Thermal decomposition of lead nitrate and emission of brown fumes"
+    expected_chapter: 1
+    page_start: 8
+    page_end: 9
+  - query: "Electrolysis of water and ratio of hydrogen and oxygen gas collected"
+    expected_chapter: 1
+    page_start: 9
+    page_end: 10
+  - query: "Displacement reaction of iron nail placed in copper sulphate solution"
+    expected_chapter: 1
+    page_start: 10
+    page_end: 11
+  - query: "Double displacement reaction between sodium sulphate and barium chloride forming precipitate"
+    expected_chapter: 1
+    page_start: 11
+    page_end: 12
+  - query: "Oxidation and reduction definition with copper oxide reaction"
+    expected_chapter: 1
+    page_start: 12
+    page_end: 13
+  - query: "Causes and prevention of rancidity and corrosion in metals"
+    expected_chapter: 1
+    page_start: 13
+    page_end: 14
+
+  # Chapter 5: Life Processes
+  - query: "Events occurring during photosynthesis and role of chlorophyll"
+    expected_chapter: 5
+    page_start: 3
+    page_end: 5
+  - query: "Nutrition in Amoeba with pseudopodia and food vacuole"
+    expected_chapter: 5
+    page_start: 5
+    page_end: 7
+  - query: "Role of gastric juice hydrochloric acid and pepsin in stomach"
+    expected_chapter: 5
+    page_start: 7
+    page_end: 9
+  - query: "Breakdown of glucose by various pathways aerobic and anaerobic respiration"
+    expected_chapter: 5
+    page_start: 9
+    page_end: 11
+  - query: "Double circulation in human heart and separation of oxygenated and deoxygenated blood"
+    expected_chapter: 5
+    page_start: 13
+    page_end: 16
+  - query: "Mechanism of transport of water and minerals in xylem tissue"
+    expected_chapter: 5
+    page_start: 16
+    page_end: 18
+  - query: "Structure of nephron and urine formation in kidneys"
+    expected_chapter: 5
+    page_start: 18
+    page_end: 21
+
+  # Chapter 11: Electricity
+  - query: "Definition of electric current and electric charge formula Q = It"
+    expected_chapter: 11
+    page_start: 1
+    page_end: 3
+  - query: "Electric potential difference formula V = W / Q and definition of volt"
+    expected_chapter: 11
+    page_start: 3
+    page_end: 5
+  - query: "Ohm's law relationship between current potential difference and resistance"
+    expected_chapter: 11
+    page_start: 5
+    page_end: 7
+  - query: "Factors affecting resistance of a conductor and electrical resistivity"
+    expected_chapter: 11
+    page_start: 8
+    page_end: 11
+  - query: "Equivalent resistance formula for resistors connected in series"
+    expected_chapter: 11
+    page_start: 11
+    page_end: 14
+  - query: "Equivalent resistance formula for resistors connected in parallel combination"
+    expected_chapter: 11
+    page_start: 14
+    page_end: 17
+  - query: "Joule's law of heating and formula H = I squared R t"
+    expected_chapter: 11
+    page_start: 18
+    page_end: 20
+  - query: "Electric power and commercial unit kilowatt hour kWh calculation"
+    expected_chapter: 11
+    page_start: 20
+    page_end: 22

@@ -19,6 +19,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include API Routers under /api
+from app.api.auth import router as auth_router
+from app.api.chapters import router as chapters_router
+from app.api.blueprints import router as blueprints_router
+from app.api.papers import router as papers_router
+from app.api.bank import router as bank_router
+
+app.include_router(auth_router, prefix="/api")
+app.include_router(chapters_router, prefix="/api")
+app.include_router(blueprints_router, prefix="/api")
+app.include_router(papers_router, prefix="/api")
+app.include_router(bank_router, prefix="/api")
+
 @app.get("/api/health")
 def health_check():
     return {

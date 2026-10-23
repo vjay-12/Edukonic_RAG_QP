@@ -12,6 +12,7 @@ __pycache__/
 # node
 node_modules/
 frontend/dist/
+*.tsbuildinfo
 
 # data (book PDFs and paper PDFs are never committed)
 *.pdf

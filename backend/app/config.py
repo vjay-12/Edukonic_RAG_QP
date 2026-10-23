@@ -22,8 +22,8 @@ class Settings(BaseSettings):
 
     # LLM & Generation
     GEMINI_API_KEY: str = ""
-    GEN_MODEL: str = "gemini-2.5-flash"
-    VALIDATE_MODEL: str = "gemini-2.5-flash"
+    GEN_MODEL: str = "gemini-flash-lite-latest"
+    VALIDATE_MODEL: str = "gemini-flash-lite-latest"
 
     # Embeddings (local sentence-transformers or gemini)
     EMBED_PROVIDER: str = "local"  # "local" | "gemini"
@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     CHUNK_OVERLAP_TOKENS: int = 40
 
     # Generation & Retrieval
-    DEDUPE_THRESHOLD: float = 0.85
+    DEDUPE_THRESHOLD: float = 0.80
     RETRIEVAL_NEIGHBORS: int = 3
 
     # API

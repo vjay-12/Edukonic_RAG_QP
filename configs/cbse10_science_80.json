@@ -1,0 +1,40 @@
+{
+  "title": "CBSE Class 10 Science Annual Examination",
+  "class": 10,
+  "subject": "Science",
+  "total_marks": 80,
+  "chapters": [
+    {"chapter_no": 1, "weight": 0.35},
+    {"chapter_no": 5, "weight": 0.35},
+    {"chapter_no": 11, "weight": 0.30}
+  ],
+  "sections": [
+    {"id": "A", "name": "Section A", "type": "mcq", "count": 20, "marks": 1},
+    {"id": "B", "name": "Section B", "type": "vsa", "count": 6, "marks": 2},
+    {"id": "C", "name": "Section C", "type": "sa", "count": 7, "marks": 3},
+    {"id": "D", "name": "Section D", "type": "la", "count": 3, "marks": 5},
+    {"id": "E", "name": "Section E", "type": "case", "count": 3, "marks": 4}
+  ],
+  "difficulty_mix": {
+    "easy": 0.3,
+    "medium": 0.5,
+    "hard": 0.2
+  },
+  "competency_percent": 50,
+  "avoid_duplicates_from_bank": true,
+  "header": {
+    "school_name": "Edukonic Model Senior Secondary School",
+    "exam_name": "Class 10 Science Board Practice Examination",
+    "date": "2026-27",
+    "duration": "3 Hours",
+    "instructions": [
+      "This question paper consists of 39 questions in 5 sections.",
+      "All questions are compulsory. However, an internal choice is provided in some questions.",
+      "Section A consists of 20 objective type questions carrying 1 mark each.",
+      "Section B consists of 6 Very Short Answer type questions carrying 2 marks each.",
+      "Section C consists of 7 Short Answer type questions carrying 3 marks each.",
+      "Section D consists of 3 Long Answer type questions carrying 5 marks each.",
+      "Section E consists of 3 source-based/case-based units of assessment of 4 marks each with sub-parts."
+    ]
+  }
+}

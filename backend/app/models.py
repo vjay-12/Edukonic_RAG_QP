@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, List, Any
 from sqlalchemy import (
     Column,
@@ -18,6 +18,9 @@ from pgvector.sqlalchemy import Vector
 from app.db import Base
 from app.config import settings
 
+def utc_now():
+    return datetime.now(timezone.utc)
+
 class Document(Base):
     __tablename__ = "documents"
 
@@ -30,7 +33,7 @@ class Document(Base):
     source_file = Column(String(500), nullable=False)
     page_count = Column(Integer, nullable=False, default=0)
     status = Column(String(50), nullable=False, default="processing")  # processing, ready, failed
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
 
     chunks = relationship("Chunk", back_populates="document", cascade="all, delete-orphan")
 
@@ -64,7 +67,7 @@ class Paper(Base):
     status = Column(String(50), nullable=False, default="queued")  # queued, planning, generating, validating, ready, failed
     progress = Column(Integer, nullable=False, default=0)
     error = Column(Text, nullable=True)
-    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
 
     questions = relationship("PaperQuestion", back_populates="paper", cascade="all, delete-orphan")
 
@@ -104,7 +107,7 @@ class QuestionBank(Base):
     competency = Column(Boolean, default=False, nullable=False)
     source = Column(JSON, nullable=True)
     embedding = Column(Vector(settings.EMBED_DIM), nullable=True)
-    approved_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    approved_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
 
 class ReferenceQuestion(Base):
     __tablename__ = "reference_questions"

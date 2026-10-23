@@ -38,8 +38,10 @@ def clean_page_text(text: str) -> str:
         # Drop lines that are just numbers (standalone page numbers)
         if stripped.isdigit() and len(stripped) <= 3:
             continue
-        # Drop standard NCERT publication stamps
-        if re.search(r'rationali[sz]ed\s+20\d\d-\d\d', stripped, re.IGNORECASE):
+        # Drop standard NCERT publication stamps and running headers
+        if re.search(r'(?:rationali[sz]ed|reprint)\s+20\d\d-\d\d', stripped, re.IGNORECASE):
+            continue
+        if stripped.lower() in ["science", "reprint", ""]:
             continue
         cleaned_lines.append(line)
 
@@ -56,20 +58,21 @@ def clean_page_text(text: str) -> str:
 
 def determine_content_type(heading: str, text: str) -> str:
     """Classify chunk content type based on heading and text content."""
-    combined = f"{heading} {text[:120]}".lower()
+    h_clean = heading.strip().strip("*# ").lower()
+    t_start = text.strip()[:60].lower()
 
-    if "activity" in combined:
+    if "activity" in h_clean or re.match(r'^activity\s+\d', t_start):
         return "activity"
-    if "question" in combined or "exercise" in combined:
+    if "question" in h_clean or "exercise" in h_clean or re.match(r'^(?:questions|exercises)\b', t_start):
         return "exercise"
-    if "example" in combined:
+    if "example" in h_clean or re.match(r'^example\s+\d', t_start):
         return "example"
-    if "what you have learnt" in combined or "summary" in combined:
+    if "what you have learnt" in h_clean or "summary" in h_clean:
         return "summary"
     return "concept"
 
 def split_long_text(text: str, target_tokens: int, max_tokens: int, overlap_tokens: int) -> List[str]:
-    """Split a long text block into overlapping sub-chunks within max_tokens."""
+    """Split a long text block into overlapping sub-chunks strictly within max_tokens."""
     paragraphs = [p.strip() for p in text.split("\n\n") if p.strip()]
     if not paragraphs:
         paragraphs = [text.strip()]
@@ -86,41 +89,46 @@ def split_long_text(text: str, target_tokens: int, max_tokens: int, overlap_toke
         else:
             if current_parts:
                 chunks.append("\n\n".join(current_parts))
-                # Create overlap using last paragraph if possible
+                # Create overlap using last paragraph if small enough
                 overlap_text = current_parts[-1]
-                if count_tokens(overlap_text) > overlap_tokens:
-                    # Just start new chunk with para
-                    current_parts = [para]
-                else:
+                if count_tokens(overlap_text) <= overlap_tokens and count_tokens(overlap_text + "\n\n" + para) <= max_tokens:
                     current_parts = [overlap_text, para]
+                else:
+                    current_parts = [para]
             else:
-                # Single paragraph is longer than max_tokens, split by sentences
-                sentences = re.split(r'(?<=[.!?])\s+', para)
+                # If block has newlines (e.g. markdown table or list), split by lines
+                if "\n" in para:
+                    sub_units = [line for line in para.split("\n") if line.strip()]
+                    separator = "\n"
+                else:
+                    sub_units = re.split(r'(?<=[.!?])\s+', para)
+                    separator = " "
+
                 s_parts: List[str] = []
-                for s in sentences:
-                    s_candidate = " ".join(s_parts + [s])
+                for s in sub_units:
+                    s_candidate = separator.join(s_parts + [s])
                     if count_tokens(s_candidate) <= max_tokens:
                         s_parts.append(s)
                     else:
                         if s_parts:
-                            chunks.append(" ".join(s_parts))
+                            chunks.append(separator.join(s_parts))
                             s_parts = [s]
                         else:
-                            # Even single sentence is huge, append it anyway
                             chunks.append(s)
                             s_parts = []
                 if s_parts:
-                    current_parts = [" ".join(s_parts)]
+                    current_parts = [separator.join(s_parts)]
                 else:
                     current_parts = []
 
     if current_parts:
         chunks.append("\n\n".join(current_parts))
 
-    # Merge tiny last chunk into previous if under 40 tokens
+    # Merge tiny last chunk into previous only if it stays strictly within max_tokens
     if len(chunks) > 1 and count_tokens(chunks[-1]) < 40:
-        last = chunks.pop()
-        chunks[-1] = chunks[-1] + "\n\n" + last
+        if count_tokens(chunks[-2] + "\n\n" + chunks[-1]) <= max_tokens:
+            last = chunks.pop()
+            chunks[-1] = chunks[-1] + "\n\n" + last
 
     return chunks
 
@@ -139,6 +147,9 @@ def chunk_markdown_pages(pages_data: List[Dict[str, Any]], chapter_no: int) -> L
     for page_idx, page in enumerate(pages_data):
         page_num = page.get("metadata", {}).get("page_number", page_idx + 1)
         raw_text = page.get("text", "")
+        # Normalize spaced out section words like Q U E S T I O N S
+        raw_text = re.sub(r'\bQ\s+U\s+E\s+S\s+T\s+I\s+O\s+N\s+S\b', 'Questions', raw_text, flags=re.IGNORECASE)
+        raw_text = re.sub(r'\bE\s+X\s+E\s+R\s+C\s+I\s+S\s+E\s+S\b', 'Exercises', raw_text, flags=re.IGNORECASE)
         cleaned = clean_page_text(raw_text)
         if not cleaned:
             continue
@@ -151,6 +162,14 @@ def chunk_markdown_pages(pages_data: List[Dict[str, Any]], chapter_no: int) -> L
             # Check if this line is a heading/section break
             match = SECTION_HEADING_REGEX.match(line_str)
             if match and len(line_str) < 120:
+                clean_heading = re.sub(r'^#+\s*', '', line_str).strip()
+                clean_heading = re.sub(r'^\*+|\*+$', '', clean_heading).strip()
+
+                # Ignore punctuation/short symbols and Solution headers
+                if len(clean_heading) < 3 or clean_heading in ["?", "??", "***", "---"] or clean_heading.lower().startswith("solution"):
+                    current_text_blocks.append(line)
+                    continue
+
                 # If we have accumulated text, save current section
                 if current_text_blocks:
                     full_sec_text = "\n".join(current_text_blocks).strip()
@@ -164,7 +183,6 @@ def chunk_markdown_pages(pages_data: List[Dict[str, Any]], chapter_no: int) -> L
                     current_text_blocks = []
 
                 # New heading starts
-                clean_heading = re.sub(r'^#+\s*', '', line_str).strip()
                 current_heading = clean_heading if clean_heading else line_str
                 start_page = current_page
             else:
@@ -218,14 +236,40 @@ def chunk_markdown_pages(pages_data: List[Dict[str, Any]], chapter_no: int) -> L
                     "token_count": count_tokens(sub),
                 })
 
-    # 3. Merge any tiny fragment (< 40 tokens) into neighbor if they share the same content_type
-    merged_chunks: List[Dict[str, Any]] = []
-    for c in final_chunks:
-        if merged_chunks and c["token_count"] < 40 and (merged_chunks[-1]["token_count"] + c["token_count"] <= settings.CHUNK_MAX_TOKENS):
-            merged_chunks[-1]["text"] += "\n\n" + c["text"]
-            merged_chunks[-1]["page_end"] = max(merged_chunks[-1]["page_end"], c["page_end"])
-            merged_chunks[-1]["token_count"] = count_tokens(merged_chunks[-1]["text"])
-        else:
-            merged_chunks.append(c)
+    # 3. Merge tiny fragments (< 40 tokens) into neighbors to satisfy the QA gate (<3% under 40 tokens)
+    if not final_chunks:
+        return []
 
-    return merged_chunks
+    # Forward merge for the first chunk if tiny
+    merged_pass: List[Dict[str, Any]] = []
+    idx = 0
+    if len(final_chunks) > 1 and final_chunks[0]["token_count"] < 40 and final_chunks[0]["content_type"] == final_chunks[1]["content_type"]:
+        combined_text = final_chunks[0]["text"] + "\n\n" + final_chunks[1]["text"]
+        if count_tokens(combined_text) <= settings.CHUNK_MAX_TOKENS:
+            final_chunks[1]["text"] = combined_text
+            final_chunks[1]["page_start"] = min(final_chunks[0]["page_start"], final_chunks[1]["page_start"])
+            final_chunks[1]["token_count"] = count_tokens(combined_text)
+            idx = 1
+
+    while idx < len(final_chunks):
+        c = final_chunks[idx]
+        should_merge = False
+        if merged_pass and c["token_count"] < 40:
+            if merged_pass[-1]["content_type"] == c["content_type"]:
+                should_merge = True
+            elif c["content_type"] == "concept" and c["token_count"] <= 35:
+                should_merge = True
+
+        if should_merge:
+            comb = merged_pass[-1]["text"] + "\n\n" + c["text"]
+            if count_tokens(comb) <= settings.CHUNK_MAX_TOKENS:
+                merged_pass[-1]["text"] = comb
+                merged_pass[-1]["page_end"] = max(merged_pass[-1]["page_end"], c["page_end"])
+                merged_pass[-1]["token_count"] = count_tokens(comb)
+            else:
+                merged_pass.append(c)
+        else:
+            merged_pass.append(c)
+        idx += 1
+
+    return merged_pass

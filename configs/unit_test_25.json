@@ -1,0 +1,39 @@
+{
+  "title": "Unit Test 1 - Class 10 Science",
+  "class": 10,
+  "subject": "Science",
+  "total_marks": 25,
+  "chapters": [
+    {"chapter_no": 1, "weight": 0.4},
+    {"chapter_no": 5, "weight": 0.3},
+    {"chapter_no": 11, "weight": 0.3}
+  ],
+  "sections": [
+    {"id": "A", "name": "Section A", "type": "mcq", "count": 6, "marks": 1},
+    {"id": "B", "name": "Section B", "type": "vsa", "count": 2, "marks": 2},
+    {"id": "C", "name": "Section C", "type": "sa", "count": 2, "marks": 3},
+    {"id": "D", "name": "Section D", "type": "la", "count": 1, "marks": 5},
+    {"id": "E", "name": "Section E", "type": "case", "count": 1, "marks": 4}
+  ],
+  "difficulty_mix": {
+    "easy": 0.3,
+    "medium": 0.5,
+    "hard": 0.2
+  },
+  "competency_percent": 40,
+  "avoid_duplicates_from_bank": true,
+  "header": {
+    "school_name": "Edukonic Model Senior Secondary School",
+    "exam_name": "Periodic Assessment / Unit Test 1 (2026-27)",
+    "date": "October 2026",
+    "duration": "1 Hour",
+    "instructions": [
+      "All questions are compulsory.",
+      "Section A consists of 6 questions of 1 mark each.",
+      "Section B consists of 2 Very Short Answer questions of 2 marks each.",
+      "Section C consists of 2 Short Answer questions of 3 marks each.",
+      "Section D consists of 1 Long Answer question of 5 marks.",
+      "Section E consists of 1 Case-based question of 4 marks."
+    ]
+  }
+}

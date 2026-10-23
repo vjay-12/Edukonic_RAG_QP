@@ -32,7 +32,8 @@ def get_tokenizer():
     """Lazy load tokenizer for exact token counting."""
     global _tokenizer
     if _tokenizer is None:
-        from transformers import AutoTokenizer
+        from transformers import AutoTokenizer, logging as tf_logging
+        tf_logging.set_verbosity_error()
         _tokenizer = AutoTokenizer.from_pretrained(settings.EMBED_MODEL)
     return _tokenizer
 
@@ -41,7 +42,7 @@ def count_tokens(text: str) -> int:
     if not text:
         return 0
     tokenizer = get_tokenizer()
-    return len(tokenizer.encode(text, add_special_tokens=False))
+    return len(tokenizer.encode(text, add_special_tokens=False, truncation=False))
 
 def get_genai_client():
     """Lazy load Google GenAI client."""
