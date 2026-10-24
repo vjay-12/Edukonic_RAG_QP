@@ -29,7 +29,7 @@ export const CitationDrawer: React.FC<CitationDrawerProps> = ({ chunkId, onClose
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-full hover:bg-[var(--surface-hover)] text-muted hover:text-white transition-colors"
+            className="p-1.5 rounded-full hover:bg-[var(--surface-hover)] text-muted hover:text-ink transition-colors"
           >
             <X size={18} />
           </button>
@@ -46,18 +46,18 @@ export const CitationDrawer: React.FC<CitationDrawerProps> = ({ chunkId, onClose
                 <span className="chip text-xs uppercase">{chunk.content_type}</span>
                 <span className="chip text-xs">{chunk.token_count} tokens</span>
               </div>
-              <h3 className="text-xl font-semibold text-white tracking-tight">
+              <h3 className="text-xl font-semibold text-ink tracking-tight">
                 {chunk.section_heading || "Textbook Section"}
               </h3>
               <p className="text-xs text-muted mt-1 font-mono">{chunk.citation}</p>
             </div>
 
-            <div className="rounded-xl border border-line bg-[var(--surface)] p-5 text-sm leading-relaxed text-gray-200 whitespace-pre-wrap font-sans">
+            <div className="rounded-xl border border-line bg-[var(--surface)] p-5 text-sm leading-relaxed text-ink whitespace-pre-wrap font-sans">
               {chunk.text}
             </div>
 
-            <div className="p-4 rounded-xl border border-[var(--border)] bg-blue-500/5 text-xs text-blue-300 flex items-start gap-3">
-              <Bookmark size={18} className="shrink-0 mt-0.5 text-blue-400" />
+            <div className="p-4 rounded-xl border border-[var(--border)] bg-blue-500/5 text-xs text-blue-600 dark:text-blue-300 flex items-start gap-3">
+              <Bookmark size={18} className="shrink-0 mt-0.5 text-blue-500" />
               <span>
                 This excerpt was retrieved directly from the official NCERT Class 10 textbook using local pgvector embeddings (HNSW cosine search).
               </span>

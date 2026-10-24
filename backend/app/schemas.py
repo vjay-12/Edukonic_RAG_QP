@@ -82,6 +82,8 @@ class QuestionContent(BaseModel):
     bloom: str = "understand"  # remember, understand, apply, analyze, evaluate
     chapter_no: int
     topic: str
+    concept_key: Optional[str] = None
+    is_numerical: Optional[bool] = False
     source: QuestionSource = Field(default_factory=QuestionSource)
     insufficient_context: bool = False
 
@@ -102,6 +104,9 @@ class BlueprintReport(BaseModel):
     competency_count: int
     competency_percent: float
     flagged_count: int
+    numerical_count: Optional[int] = 0
+    concept_keys: Optional[List[str]] = Field(default_factory=list)
+    duplicate_concept_keys: Optional[List[str]] = Field(default_factory=list)
 
 # API Schemas
 class LoginRequest(BaseModel):
@@ -137,6 +142,7 @@ class PaperDetailResponse(BaseModel):
     created_at: str
     questions: List[QuestionResponse] = Field(default_factory=list)
     blueprint_report: Optional[Dict[str, Any]] = None
+    llm_usage: Optional[Dict[str, Any]] = None
 
 class PaperListItem(BaseModel):
     id: int

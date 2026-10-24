@@ -1,10 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { FileText, ArrowRight, Eye, Download, Plus } from "lucide-react";
-import { fetchPapers, PaperListItem } from "../api/client";
+import { FileText, ArrowRight, Eye, Download, Plus, Loader2 } from "lucide-react";
+import { fetchPapers, PaperListItem, downloadPaperDocx } from "../api/client";
+import { useToast } from "../components/Toast";
 
 export const PaperHistory: React.FC = () => {
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const { showToast } = useToast();
   const { data: papers = [], isLoading } = useQuery({
     queryKey: ["papers"],
     queryFn: fetchPapers,
@@ -14,7 +17,7 @@ export const PaperHistory: React.FC = () => {
     <div className="mx-auto max-w-5xl px-6 py-10 space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-6">
         <div>
-          <h1 className="display text-4xl text-white font-normal">Generated Papers</h1>
+          <h1 className="display text-4xl text-ink font-normal">Generated Papers</h1>
           <p className="text-sm text-muted mt-1">
             History and repository of CBSE Question Papers created with Edkonic RAG.
           </p>
@@ -30,7 +33,7 @@ export const PaperHistory: React.FC = () => {
       ) : papers.length === 0 ? (
         <div className="glass p-12 text-center space-y-4">
           <FileText size={36} className="mx-auto text-muted" />
-          <h3 className="text-lg font-semibold text-white">No question papers generated yet</h3>
+          <h3 className="text-lg font-semibold text-ink">No question papers generated yet</h3>
           <p className="text-xs text-muted max-w-md mx-auto">
             Get started by configuring syllabus chapters and sections to generate your first examination paper.
           </p>
@@ -59,12 +62,12 @@ export const PaperHistory: React.FC = () => {
                 {papers.map((p: PaperListItem) => (
                   <tr key={p.id} className="hover:bg-[var(--surface-hover)] transition-colors">
                     <td className="py-3.5 px-4 font-mono text-xs text-muted">#{p.id}</td>
-                    <td className="py-3.5 px-4 font-semibold text-white">
-                      <Link to={`/papers/${p.id}`} className="hover:text-blue-400 transition-colors">
+                    <td className="py-3.5 px-4 font-semibold text-ink">
+                      <Link to={`/papers/${p.id}`} className="hover:text-blue-500 transition-colors">
                         {p.title}
                       </Link>
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-xs text-white">{p.total_marks}</td>
+                    <td className="py-3.5 px-4 font-mono text-xs text-ink">{p.total_marks}</td>
                     <td className="py-3.5 px-4 text-xs text-muted">{p.question_count}</td>
                     <td className="py-3.5 px-4">
                       {p.status === "ready" && (
@@ -99,14 +102,28 @@ export const PaperHistory: React.FC = () => {
                         >
                           Preview
                         </Link>
-                        <a
-                          href={`/api/papers/${p.id}/export?part=paper`}
-                          className="btn btn-ghost !p-2 text-xs rounded-full text-blue-400"
+                        <button
+                          onClick={async () => {
+                            try {
+                              setDownloadingId(p.id);
+                              const filename = await downloadPaperDocx(p.id, "paper");
+                              showToast(`Downloaded ${filename}`, "success");
+                            } catch (err: any) {
+                              showToast(err.message || "Failed to download paper from server", "error");
+                            } finally {
+                              setDownloadingId(null);
+                            }
+                          }}
+                          disabled={downloadingId === p.id}
+                          className="btn btn-ghost !p-2 text-xs rounded-full text-blue-400 cursor-pointer disabled:opacity-50"
                           title="Download DOCX"
-                          download
                         >
-                          <Download size={13} />
-                        </a>
+                          {downloadingId === p.id ? (
+                            <Loader2 size={13} className="animate-spin" />
+                          ) : (
+                            <Download size={13} />
+                          )}
+                        </button>
                       </div>
                     </td>
                   </tr>

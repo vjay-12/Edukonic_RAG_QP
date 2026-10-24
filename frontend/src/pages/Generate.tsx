@@ -174,9 +174,9 @@ export const Generate: React.FC = () => {
       {/* Hero Header */}
       <div>
         <span className="chip">
-          <Sparkles size={14} className="text-blue-400" /> New · AI question paper generator
+          <Sparkles size={14} className="text-blue-500 dark:text-blue-400" /> New · AI question paper generator
         </span>
-        <h1 className="display mt-6 text-5xl md:text-6xl text-white">
+        <h1 className="display mt-6 text-5xl md:text-6xl text-ink">
           Board-ready papers, <span className="grad-blue">grounded</span> in your{" "}
           <span className="grad-pink">NCERT</span> books.
         </h1>
@@ -186,7 +186,7 @@ export const Generate: React.FC = () => {
       </div>
 
       {errorMessage && (
-        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300 flex items-center gap-3">
+        <div className="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-600 dark:text-rose-300 flex items-center gap-3">
           <AlertTriangle size={18} className="shrink-0" />
           <span>{errorMessage}</span>
         </div>
@@ -197,8 +197,8 @@ export const Generate: React.FC = () => {
         {/* Preset Selector */}
         <section className="glass p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-              <Layers size={18} className="text-blue-400" />
+            <h2 className="text-xl font-semibold text-ink flex items-center gap-2">
+              <Layers size={18} className="text-blue-500 dark:text-blue-400" />
               <span>Blueprint Presets</span>
             </h2>
             <span className="text-xs text-muted">Choose a standard CBSE framework</span>
@@ -216,7 +216,7 @@ export const Generate: React.FC = () => {
                 }`}
               >
                 <div className="flex items-center justify-between mb-1">
-                  <h3 className="font-semibold text-white">{b.title}</h3>
+                  <h3 className="font-semibold text-ink">{b.title}</h3>
                   <span className="chip text-xs font-mono">{b.total_marks || "N/A"} Marks</span>
                 </div>
                 <p className="text-xs text-muted">
@@ -229,7 +229,7 @@ export const Generate: React.FC = () => {
 
         {/* Paper Details */}
         <section className="glass p-6 space-y-4">
-          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-ink flex items-center gap-2">
             <FileText size={18} className="text-purple-400" />
             <span>Paper Information</span>
           </h2>
@@ -284,8 +284,8 @@ export const Generate: React.FC = () => {
         {/* Chapter Selection & Weighting */}
         <section className="glass p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-              <CheckCircle2 size={18} className="text-emerald-400" />
+            <h2 className="text-xl font-semibold text-ink flex items-center gap-2">
+              <CheckCircle2 size={18} className="text-emerald-500 dark:text-emerald-400" />
               <span>Syllabus Chapters ({selectedChapters.length} Selected)</span>
             </h2>
             <span className="text-xs text-muted">Weights are normalized automatically</span>
@@ -302,8 +302,8 @@ export const Generate: React.FC = () => {
                     key={ch.chapter_no}
                     className={`p-4 rounded-xl border transition-all ${
                       isSelected
-                        ? "border-emerald-500/50 bg-emerald-950/10"
-                        : "border-line bg-[var(--surface)] opacity-60"
+                        ? "border-emerald-500/50 bg-emerald-500/10"
+                        : "border-line bg-[var(--surface)] opacity-70"
                     }`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-2">
@@ -314,7 +314,7 @@ export const Generate: React.FC = () => {
                           onChange={() => toggleChapter(ch.chapter_no)}
                           className="rounded text-emerald-500 focus:ring-0"
                         />
-                        <span className="font-semibold text-sm text-white">
+                        <span className="font-semibold text-sm text-ink">
                           Ch {ch.chapter_no}: {ch.chapter_title}
                         </span>
                       </label>
@@ -347,10 +347,10 @@ export const Generate: React.FC = () => {
         <section className="glass p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-semibold text-white">Sections & Marks Distribution</h2>
+              <h2 className="text-xl font-semibold text-ink">Sections & Marks Distribution</h2>
               <p className="text-xs text-muted mt-0.5">
-                Total Questions: <strong className="text-white">{totalQuestions}</strong> · Total Marks:{" "}
-                <strong className="text-emerald-400 font-mono text-sm">{calculatedTotalMarks}</strong>
+                Total Questions: <strong className="text-ink">{totalQuestions}</strong> · Total Marks:{" "}
+                <strong className="text-emerald-600 dark:text-emerald-400 font-mono text-sm">{calculatedTotalMarks}</strong>
               </p>
             </div>
             <button
@@ -377,7 +377,7 @@ export const Generate: React.FC = () => {
               <tbody className="divide-y divide-line">
                 {sections.map((sec, idx) => (
                   <tr key={idx} className="group">
-                    <td className="py-2.5 font-bold font-mono text-white">{sec.id}</td>
+                    <td className="py-2.5 font-bold font-mono text-ink">{sec.id}</td>
                     <td className="py-2.5">
                       <select
                         className="field !py-1 text-xs"
@@ -412,14 +412,14 @@ export const Generate: React.FC = () => {
                         onChange={(e) => handleSectionChange(idx, "marks", parseInt(e.target.value) || 1)}
                       />
                     </td>
-                    <td className="py-2.5 font-mono text-white font-semibold">
+                    <td className="py-2.5 font-mono text-ink font-semibold">
                       {sec.count * sec.marks} marks
                     </td>
                     <td className="py-2.5 text-right">
                       <button
                         type="button"
                         onClick={() => handleRemoveSection(idx)}
-                        className="text-xs text-muted hover:text-rose-400 p-1"
+                        className="text-xs text-muted hover:text-rose-500 p-1"
                       >
                         Remove
                       </button>
@@ -433,16 +433,16 @@ export const Generate: React.FC = () => {
 
         {/* Difficulty Mix & Competency */}
         <section className="glass p-6 space-y-6">
-          <h2 className="text-xl font-semibold text-white flex items-center gap-2">
-            <Sliders size={18} className="text-pink-400" />
+          <h2 className="text-xl font-semibold text-ink flex items-center gap-2">
+            <Sliders size={18} className="text-pink-500 dark:text-pink-400" />
             <span>Difficulty Mix & Competency Focus</span>
           </h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="space-y-2">
               <div className="flex justify-between text-xs font-medium">
-                <span className="text-emerald-400">Easy Questions</span>
-                <span className="font-mono">{diffMix.easy}%</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Easy Questions</span>
+                <span className="font-mono text-ink">{diffMix.easy}%</span>
               </div>
               <input
                 type="range"
@@ -457,8 +457,8 @@ export const Generate: React.FC = () => {
 
             <div className="space-y-2">
               <div className="flex justify-between text-xs font-medium">
-                <span className="text-blue-400">Medium Questions</span>
-                <span className="font-mono">{diffMix.medium}%</span>
+                <span className="text-blue-600 dark:text-blue-400 font-semibold">Medium Questions</span>
+                <span className="font-mono text-ink">{diffMix.medium}%</span>
               </div>
               <input
                 type="range"
@@ -473,8 +473,8 @@ export const Generate: React.FC = () => {
 
             <div className="space-y-2">
               <div className="flex justify-between text-xs font-medium">
-                <span className="text-rose-400">Hard Questions</span>
-                <span className="font-mono">{diffMix.hard}%</span>
+                <span className="text-rose-600 dark:text-rose-400 font-semibold">Hard Questions</span>
+                <span className="font-mono text-ink">{diffMix.hard}%</span>
               </div>
               <input
                 type="range"
@@ -491,8 +491,8 @@ export const Generate: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-line">
             <div className="space-y-2">
               <div className="flex justify-between text-xs font-medium">
-                <span className="text-sky-300">Competency-Based Assessment Target</span>
-                <span className="font-mono">{competencyPercent}%</span>
+                <span className="text-sky-600 dark:text-sky-400 font-semibold">Competency-Based Assessment Target</span>
+                <span className="font-mono text-ink">{competencyPercent}%</span>
               </div>
               <input
                 type="range"
@@ -516,8 +516,8 @@ export const Generate: React.FC = () => {
                 onChange={(e) => setAvoidBankDedupe(e.target.checked)}
                 className="rounded text-blue-500 focus:ring-0 cursor-pointer"
               />
-              <label htmlFor="avoidBank" className="text-xs text-gray-300 cursor-pointer">
-                <strong>Avoid duplicates from Question Bank:</strong> Automatically cross-references previously approved examination items using vector similarity to prevent repeated questions.
+              <label htmlFor="avoidBank" className="text-xs text-muted cursor-pointer leading-relaxed">
+                <strong className="text-ink">Avoid duplicates from Question Bank:</strong> Automatically cross-references previously approved examination items using vector similarity to prevent repeated questions.
               </label>
             </div>
           </div>
@@ -526,7 +526,7 @@ export const Generate: React.FC = () => {
         {/* Submit Button */}
         <div className="flex items-center justify-between pt-4">
           <div className="text-sm text-muted">
-            Ready to generate <strong className="text-white">{totalQuestions} questions</strong> ({calculatedTotalMarks} marks total).
+            Ready to generate <strong className="text-ink">{totalQuestions} questions</strong> ({calculatedTotalMarks} marks total).
           </div>
           <button
             type="submit"

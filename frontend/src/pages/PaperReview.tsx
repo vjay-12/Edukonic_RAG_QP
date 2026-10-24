@@ -71,8 +71,8 @@ export const PaperReview: React.FC = () => {
   if (isLoading || !paper) {
     return (
       <div className="mx-auto max-w-4xl px-6 py-20 text-center space-y-4">
-        <Sparkles size={28} className="animate-spin mx-auto text-blue-400" />
-        <h2 className="text-xl font-medium text-white">Loading Question Paper...</h2>
+        <Sparkles size={28} className="animate-spin mx-auto text-blue-500" />
+        <h2 className="text-xl font-medium text-ink">Loading Question Paper...</h2>
       </div>
     );
   }
@@ -83,11 +83,11 @@ export const PaperReview: React.FC = () => {
       <div className="mx-auto max-w-2xl px-6 py-24 space-y-8 text-center">
         <div className="glass p-8 space-y-6">
           <span className="chip">
-            <Sparkles size={14} className="text-blue-400 animate-pulse" />
+            <Sparkles size={14} className="text-blue-500 dark:text-blue-400 animate-pulse" />
             <span>AI Generation Pipeline Active</span>
           </span>
 
-          <h2 className="display text-4xl text-white font-normal">
+          <h2 className="display text-4xl text-ink font-normal">
             Synthesizing <span className="grad-blue">{paper.title}</span>
           </h2>
 
@@ -117,10 +117,10 @@ export const PaperReview: React.FC = () => {
   if (paper.status === "failed") {
     return (
       <div className="mx-auto max-w-2xl px-6 py-24 text-center space-y-6">
-        <div className="glass p-8 border-rose-500/40 bg-rose-950/10 space-y-4">
-          <AlertCircle size={36} className="mx-auto text-rose-400" />
-          <h2 className="text-2xl font-bold text-white">Paper Generation Failed</h2>
-          <p className="text-sm text-rose-200">{paper.error || "An unexpected error occurred during generation."}</p>
+        <div className="glass p-8 border-rose-500/40 bg-rose-500/10 space-y-4">
+          <AlertCircle size={36} className="mx-auto text-rose-500" />
+          <h2 className="text-2xl font-bold text-ink">Paper Generation Failed</h2>
+          <p className="text-sm text-rose-600 dark:text-rose-300">{paper.error || "An unexpected error occurred during generation."}</p>
           <div className="pt-4 flex justify-center gap-4">
             <Link to="/generate" className="btn btn-primary text-xs">
               Back to Configure
@@ -131,11 +131,18 @@ export const PaperReview: React.FC = () => {
     );
   }
 
-  // Group questions by section
+  // Group questions by section and order by configured template sections
+  const configuredSectionIds: string[] = (paper.config?.sections || []).map((s: any) => s.id || s.name || s);
   const sectionsMap: Record<string, typeof paper.questions> = {};
   paper.questions.forEach((q) => {
     if (!sectionsMap[q.section]) sectionsMap[q.section] = [];
     sectionsMap[q.section].push(q);
+  });
+  const sortedSectionEntries = Object.entries(sectionsMap).sort(([secA], [secB]) => {
+    const idxA = configuredSectionIds.indexOf(secA);
+    const idxB = configuredSectionIds.indexOf(secB);
+    if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+    return secA.localeCompare(secB);
   });
 
   const rep = paper.blueprint_report;
@@ -148,13 +155,13 @@ export const PaperReview: React.FC = () => {
       {/* Top Breadcrumb & Action Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-6">
         <div>
-          <Link to="/papers" className="text-xs text-muted hover:text-white flex items-center gap-1 mb-2">
+          <Link to="/papers" className="text-xs text-muted hover:text-ink flex items-center gap-1 mb-2">
             <ArrowLeft size={12} /> Back to Papers
           </Link>
-          <h1 className="text-3xl font-bold text-white tracking-tight">{paper.title}</h1>
+          <h1 className="text-3xl font-bold text-ink tracking-tight">{paper.title}</h1>
           <p className="text-xs text-muted mt-1">
             Generated on {new Date(paper.created_at).toLocaleString()} · {paper.questions.length} Questions · Total Marks:{" "}
-            <strong className="text-white">{rep?.total_marks || 25}</strong>
+            <strong className="text-ink">{rep?.total_marks || 25}</strong>
           </p>
         </div>
 
@@ -201,47 +208,47 @@ export const PaperReview: React.FC = () => {
         <div className="glass p-5 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4 text-center">
           <div className="p-2 border-r border-line">
             <div className="text-xs text-muted">Total Marks</div>
-            <div className="text-2xl font-bold text-white font-mono">{rep.total_marks}</div>
+            <div className="text-2xl font-bold text-ink font-mono">{rep.total_marks}</div>
           </div>
           <div className="p-2 border-r border-line">
             <div className="text-xs text-muted">Questions</div>
-            <div className="text-2xl font-bold text-white font-mono">{rep.question_count}</div>
+            <div className="text-2xl font-bold text-ink font-mono">{rep.question_count}</div>
           </div>
           <div className="p-2 border-r border-line">
             <div className="text-xs text-muted">Review Status</div>
             <div className="text-xs font-semibold mt-1">
-              <span className="text-emerald-400">{acceptedCount} acc</span> ·{" "}
+              <span className="text-emerald-500 dark:text-emerald-400">{acceptedCount} acc</span> ·{" "}
               <span className="text-muted">{pendingCount} dft</span>
-              {rejectedCount > 0 && <span className="text-rose-400"> · {rejectedCount} rej</span>}
+              {rejectedCount > 0 && <span className="text-rose-500 dark:text-rose-400"> · {rejectedCount} rej</span>}
             </div>
           </div>
           <div className="p-2 border-r border-line">
             <div className="text-xs text-muted">Competency</div>
-            <div className="text-xl font-bold text-sky-400 font-mono">{rep.competency_percent}%</div>
+            <div className="text-xl font-bold text-sky-500 dark:text-sky-400 font-mono">{rep.competency_percent}%</div>
           </div>
           <div className="p-2 border-r border-line">
             <div className="text-xs text-muted">Flagged Items</div>
-            <div className={`text-xl font-bold font-mono ${rep.flagged_count > 0 ? "text-amber-400" : "text-emerald-400"}`}>
+            <div className={`text-xl font-bold font-mono ${rep.flagged_count > 0 ? "text-amber-500 dark:text-amber-400" : "text-emerald-500 dark:text-emerald-400"}`}>
               {rep.flagged_count}
             </div>
           </div>
           <div className="p-2">
             <div className="text-xs text-muted">Chapter Marks</div>
-            <div className="text-xs text-gray-300 font-mono mt-1">
+            <div className="text-xs text-ink font-mono mt-1">
               {Object.entries(rep.marks_by_chapter).map(([ch, m]) => `Ch${ch}:${m}`).join(" ")}
             </div>
           </div>
         </div>
       )}
 
-      {/* Questions Grouped by Section */}
+      {/* Questions Grouped by Section (ordered by template) */}
       <div className="space-y-10">
-        {Object.entries(sectionsMap).map(([sec, qList]) => {
+        {sortedSectionEntries.map(([sec, qList]) => {
           const marksEach = qList[0]?.marks || 1;
           return (
             <div key={sec} className="space-y-4">
               <div className="flex items-center justify-between border-b border-line pb-2">
-                <h2 className="text-xl font-semibold text-white tracking-tight flex items-center gap-2">
+                <h2 className="text-xl font-semibold text-ink tracking-tight flex items-center gap-2">
                   <span>Section {sec}</span>
                   <span className="text-xs text-muted font-normal font-sans">
                     ({marksEach} Mark{marksEach > 1 ? "s" : ""} each · {qList.length} Questions)

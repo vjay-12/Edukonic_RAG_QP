@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Check, X, RotateCw, Edit3, ChevronDown, ChevronUp, BookOpen, AlertCircle, CheckCircle2, AlertTriangle, Save } from "lucide-react";
 import { QuestionData } from "../api/client";
+import { formatChemicalFormulas, stripOptionPrefix, stripSubQuestionPrefix, getRomanNumeral, formatMarks, cleanStemForSubquestions } from "../utils/formatters";
 
 interface QuestionCardProps {
   question: QuestionData;
@@ -71,14 +72,14 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
       {/* Top Header & Badges */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="font-semibold text-lg text-white">Q{question.slot_no}.</span>
+          <span className="font-semibold text-lg text-ink">Q{question.slot_no}.</span>
           <span className="chip text-xs">Section {question.section}</span>
           <span className="chip text-xs">Ch {question.chapter_no}</span>
           <span className="chip text-xs uppercase font-mono">{question.type}</span>
-          <span className="chip text-xs font-semibold">{question.marks} Mark{question.marks > 1 ? "s" : ""}</span>
+          <span className="chip text-xs font-semibold">{formatMarks(question.marks)}</span>
           <span className="chip text-xs capitalize">{question.difficulty}</span>
           {question.competency && (
-            <span className="chip text-xs text-sky-400 border-sky-500/30 bg-sky-500/10">Competency</span>
+            <span className="chip text-xs text-sky-500 dark:text-sky-400 border-sky-500/30 bg-sky-500/10">Competency</span>
           )}
 
           {/* Validation Verdict Chip */}
@@ -103,10 +104,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         {primaryChunkId ? (
           <button
             onClick={() => onOpenCitation(primaryChunkId)}
-            className="chip hover:bg-[var(--surface-hover)] hover:text-white transition-colors cursor-pointer text-xs"
+            className="chip hover:bg-[var(--surface-hover)] hover:text-ink transition-colors cursor-pointer text-xs"
             title="Inspect source textbook text in citation drawer"
           >
-            <BookOpen size={12} className="text-blue-400" />
+            <BookOpen size={12} className="text-blue-500 dark:text-blue-400" />
             <span>NCERT Science 10 · {pageStr}</span>
           </button>
         ) : (
@@ -116,8 +117,8 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
 
       {/* Validation issues warning banner if present */}
       {val.issues && val.issues.length > 0 && (
-        <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-300 flex items-start gap-2">
-          <AlertTriangle size={15} className="shrink-0 mt-0.5 text-amber-400" />
+        <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2">
+          <AlertTriangle size={15} className="shrink-0 mt-0.5 text-amber-500" />
           <div>
             <strong>Moderator Notes:</strong> {val.issues.join(" ")}
           </div>
@@ -136,8 +137,10 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
           />
         </div>
       ) : (
-        <p className="text-base font-medium text-gray-100 leading-relaxed mb-4 whitespace-pre-wrap">
-          {c.stem}
+        <p className="text-base font-medium text-ink leading-relaxed mb-4 whitespace-pre-wrap">
+          {(c.sub_questions && c.sub_questions.length > 0)
+            ? cleanStemForSubquestions(c.stem, c.sub_questions)
+            : formatChemicalFormulas(c.stem)}
         </p>
       )}
 
@@ -147,38 +150,45 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
           {c.options.map((opt: string, i: number) => {
             const letter = String.fromCharCode(65 + i);
             const isCorrect = c.correct_option === letter;
+            const cleanOpt = stripOptionPrefix(opt);
+            const formattedOpt = formatChemicalFormulas(cleanOpt);
             return (
               <div
                 key={i}
                 className={`p-3 rounded-xl border text-sm flex items-start gap-2.5 transition-colors ${
                   isCorrect
-                    ? "border-emerald-500/50 bg-emerald-950/20 text-emerald-200"
-                    : "border-line bg-[var(--surface)] text-gray-300"
+                    ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200"
+                    : "border-line bg-[var(--surface)] text-ink"
                 }`}
               >
-                <span className={`font-bold font-mono text-xs px-1.5 py-0.5 rounded ${isCorrect ? "bg-emerald-500/20 text-emerald-300" : "bg-white/10 text-muted"}`}>
+                <span className={`font-bold font-mono text-xs px-1.5 py-0.5 rounded ${isCorrect ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-300" : "bg-black/5 dark:bg-white/10 text-muted"}`}>
                   ({letter})
                 </span>
-                <span>{opt}</span>
+                <span>{formattedOpt}</span>
               </div>
             );
           })}
         </div>
       )}
 
-      {/* Case Sub-Questions */}
+      {/* Sub-Questions (Render consistently for all question types) */}
       {c.sub_questions && Array.isArray(c.sub_questions) && (
         <div className="space-y-2 mb-4 bg-[var(--surface)] p-4 rounded-xl border border-line">
           <h4 className="text-xs uppercase tracking-wider text-muted font-semibold mb-2">Sub-Questions:</h4>
-          {c.sub_questions.map((sq: any, i: number) => (
-            <div key={i} className="text-sm text-gray-200 flex items-start gap-2">
-              <span className="font-semibold text-xs px-1.5 py-0.5 rounded bg-white/10 shrink-0 mt-0.5">({i + 1})</span>
-              <div className="grow">
-                <span>{sq.stem}</span>
-                <span className="ml-2 font-mono text-xs text-muted">[{sq.marks} Mark{sq.marks > 1 ? "s" : ""}]</span>
+          {c.sub_questions.map((sq: any, i: number) => {
+            const roman = getRomanNumeral(i);
+            const cleanSubStem = stripSubQuestionPrefix(sq.stem);
+            const formattedSubStem = formatChemicalFormulas(cleanSubStem);
+            return (
+              <div key={i} className="text-sm text-ink flex items-start gap-2">
+                <span className="font-semibold text-xs px-1.5 py-0.5 rounded bg-black/5 dark:bg-white/10 text-muted shrink-0 mt-0.5 font-mono">{roman}</span>
+                <div className="grow">
+                  <span>{formattedSubStem}</span>
+                  <span className="ml-2 font-mono text-xs text-muted">[{formatMarks(sq.marks)}]</span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -186,7 +196,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
       <div className="border-t border-line pt-3 mt-3">
         <button
           onClick={() => setIsExpanded(!isExpanded)}
-          className="flex items-center gap-1.5 text-xs font-medium text-muted hover:text-white transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 text-xs font-medium text-muted hover:text-ink transition-colors cursor-pointer"
         >
           {isExpanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
           <span>{isExpanded ? "Hide" : "View"} Model Answer & Marking Scheme</span>
@@ -208,20 +218,20 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
               <div>
                 <strong className="text-xs uppercase text-muted block mb-1">Model Answer:</strong>
                 {c.correct_option && (
-                  <span className="font-bold text-emerald-400 mr-2">Correct Option ({c.correct_option}) —</span>
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400 mr-2">Correct Option ({c.correct_option}) —</span>
                 )}
-                <span className="text-gray-300 leading-relaxed">{c.answer}</span>
+                <span className="text-ink leading-relaxed">{c.answer}</span>
               </div>
             )}
 
             {c.marking_scheme && Array.isArray(c.marking_scheme) && c.marking_scheme.length > 0 && (
               <div>
                 <strong className="text-xs uppercase text-muted block mb-1.5">Step-Wise Marking Scheme:</strong>
-                <ul className="space-y-1 list-disc list-inside text-xs text-gray-400">
+                <ul className="space-y-1 list-disc list-inside text-xs text-muted">
                   {c.marking_scheme.map((step: any, idx: number) => (
                     <li key={idx}>
-                      <span className="text-gray-200">{step.step}</span>
-                      <span className="font-mono text-muted ml-2">[{step.marks} mark{step.marks > 1 ? "s" : ""}]</span>
+                      <span className="text-ink">{step.step}</span>
+                      <span className="font-mono text-muted ml-2">[{formatMarks(step.marks)}]</span>
                     </li>
                   ))}
                 </ul>
@@ -237,7 +247,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
           {question.status !== "accepted" ? (
             <button
               onClick={() => onStatusChange("accepted")}
-              className="btn btn-ghost !py-1.5 !px-3 text-xs hover:border-emerald-500 hover:text-emerald-400 rounded-full"
+              className="btn btn-ghost !py-1.5 !px-3 text-xs hover:border-emerald-500 hover:text-emerald-500 rounded-full"
             >
               <Check size={14} /> Accept
             </button>
@@ -250,7 +260,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
           {question.status !== "rejected" ? (
             <button
               onClick={() => onStatusChange("rejected")}
-              className="btn btn-ghost !py-1.5 !px-3 text-xs hover:border-rose-500 hover:text-rose-400 rounded-full"
+              className="btn btn-ghost !py-1.5 !px-3 text-xs hover:border-rose-500 hover:text-rose-500 rounded-full"
             >
               <X size={14} /> Reject
             </button>
@@ -270,7 +280,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
           ) : (
             <button
               onClick={() => setIsEditing(true)}
-              className="btn btn-ghost !py-1.5 !px-3 text-xs rounded-full text-muted hover:text-white"
+              className="btn btn-ghost !py-1.5 !px-3 text-xs rounded-full text-muted hover:text-ink"
             >
               <Edit3 size={13} /> Edit Inline
             </button>
@@ -280,7 +290,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
         <button
           onClick={() => setShowRegenModal(true)}
           disabled={isRegenerating}
-          className="btn btn-ghost !py-1.5 !px-3 text-xs rounded-full text-muted hover:text-white"
+          className="btn btn-ghost !py-1.5 !px-3 text-xs rounded-full text-muted hover:text-ink"
           title="Regenerate this question with AI"
         >
           <RotateCw size={13} className={isRegenerating ? "animate-spin" : ""} />
@@ -292,7 +302,7 @@ export const QuestionCard: React.FC<QuestionCardProps> = ({
       {showRegenModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
           <div className="glass w-full max-w-lg p-6 space-y-4 border border-line shadow-2xl bg-[var(--bg-elev)]">
-            <h3 className="text-lg font-semibold text-white">Regenerate Question {question.slot_no}</h3>
+            <h3 className="text-lg font-semibold text-ink">Regenerate Question {question.slot_no}</h3>
             <p className="text-xs text-muted">
               You can provide optional instructions to guide the AI regeneration (e.g. "Focus on numerical calculation with units" or "Make it simpler").
             </p>

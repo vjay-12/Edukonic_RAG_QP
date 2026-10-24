@@ -1,6 +1,6 @@
 import logging
 from typing import List, Optional, Dict, Any
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Query, Response
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
@@ -18,6 +18,7 @@ from app.schemas import (
 from app.services.generator import generate_paper_pipeline, generate_single_slot
 from app.services.planner import compute_blueprint_report
 from app.services.exporter import export_paper_docx, export_answer_key_docx
+from app.services.llm import GeminiDailyQuotaError, is_daily_quota_error
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/papers", tags=["Question Papers"])
@@ -63,15 +64,30 @@ def run_paper_generation_background(paper_id: int, config_data: Dict[str, Any]):
                 )
                 db.add(pq)
 
+            # Store generation report and llm_usage in paper config
+            curr_cfg = dict(paper.config or {})
+            curr_cfg["llm_usage"] = report.get("llm_usage", {})
+            curr_cfg["llm_usage_summary"] = report.get("llm_usage_summary", "")
+            curr_cfg["blueprint_report"] = report
+            paper.config = curr_cfg
+
             paper.status = "ready"
             paper.progress = 100
             paper.error = None
             db.commit()
 
-        except Exception as e:
-            logger.exception("Error generating paper %s", paper_id)
+        except GeminiDailyQuotaError as e:
+            logger.error("Daily Gemini quota reached for paper %s: %s", paper_id, e)
             paper.status = "failed"
             paper.error = str(e)
+            db.commit()
+        except Exception as e:
+            logger.exception("Error generating paper %s", paper_id)
+            if is_daily_quota_error(e):
+                paper.error = "Daily Gemini quota reached, resets around 12:30 PM IST"
+            else:
+                paper.error = str(e)
+            paper.status = "failed"
             db.commit()
 
 @router.post("", response_model=Dict[str, Any])
@@ -171,7 +187,10 @@ def get_paper_detail(paper_id: int, db: Session = Depends(get_db)):
             )
         )
 
-    blueprint_rep = compute_blueprint_report([], raw_qs) if raw_qs else None
+    blueprint_rep = (paper.config or {}).get("blueprint_report") or (compute_blueprint_report([], raw_qs) if raw_qs else None)
+    llm_usage = (paper.config or {}).get("llm_usage")
+    if blueprint_rep and llm_usage and "llm_usage" not in blueprint_rep:
+        blueprint_rep["llm_usage"] = llm_usage
 
     return PaperDetailResponse(
         id=paper.id,
@@ -183,6 +202,7 @@ def get_paper_detail(paper_id: int, db: Session = Depends(get_db)):
         created_at=paper.created_at.isoformat(),
         questions=questions_out,
         blueprint_report=blueprint_rep,
+        llm_usage=llm_usage,
     )
 
 @router.patch("/{paper_id}/questions/{qid}")
@@ -230,11 +250,34 @@ def regenerate_question(
 
     paper = db.query(Paper).filter(Paper.id == paper_id).first()
 
-    # Collect existing paper embeddings excluding this question
+    # Collect existing paper embeddings, concept keys, and concept tags excluding this question
     paper_embeddings = [
         list(q.embedding) for q in paper.questions 
         if q.id != qid and q.embedding is not None
     ]
+    paper_concept_keys = {
+        q.content.get("concept_key") for q in paper.questions 
+        if q.id != qid and q.content and q.content.get("concept_key")
+    }
+    paper_concept_tags = set()
+    for q in paper.questions:
+        if q.id != qid and q.content:
+            tags = q.content.get("concept_tags") or []
+            paper_concept_tags.update(tags)
+
+    paper_reactions = set()
+    from app.services.text_utils import extract_reaction_signatures
+    for q in paper.questions:
+        if q.id != qid and q.content:
+            stem = q.content.get("stem", "")
+            ans = str(q.content.get("answer", ""))
+            paper_reactions.update(extract_reaction_signatures(stem + " " + ans))
+
+    used_chunk_ids = {
+        cid for q in paper.questions 
+        if q.id != qid and q.source_chunk_ids
+        for cid in q.source_chunk_ids
+    }
 
     slot_spec = {
         "slot_no": question.slot_no,
@@ -248,21 +291,25 @@ def regenerate_question(
     }
 
     instruction = payload.instruction if payload and payload.instruction else ""
-    used_chunk_ids = set()
 
     try:
-        new_content, new_val, stem_emb = generate_single_slot(
+        new_content, new_val, cand_embs, concept_key, rxns, tags = generate_single_slot(
             slot=slot_spec,
             db=db,
             used_chunk_ids=used_chunk_ids,
             paper_embeddings=paper_embeddings,
+            paper_concept_keys=paper_concept_keys,
+            paper_concept_tags=paper_concept_tags,
+            paper_reactions=paper_reactions,
             avoid_bank=True,
             custom_instruction=instruction
         )
 
+        primary_emb = cand_embs[0] if cand_embs else None
+        new_content["concept_tags"] = tags
         question.content = new_content
         question.validation = new_val
-        question.embedding = stem_emb
+        question.embedding = primary_emb
         question.source_chunk_ids = new_content.get("source", {}).get("chunk_ids", [])
         question.topic = new_content.get("topic", question.topic)
         question.status = "draft"
@@ -355,10 +402,15 @@ def export_paper_download(
         filename = f"Answer_Key_Paper_{paper_id}.docx"
     else:
         stream = export_paper_docx(paper_dict, questions_data)
-        filename = f"Question_Paper_{paper_id}.docx"
+        filename = f"Paper_{paper_id}.docx"
 
-    return StreamingResponse(
-        stream,
+    file_bytes = stream.getvalue()
+    return Response(
+        content=file_bytes,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Length": str(len(file_bytes)),
+            "Access-Control-Expose-Headers": "Content-Disposition",
+        }
     )

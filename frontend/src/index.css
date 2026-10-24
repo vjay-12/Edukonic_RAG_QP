@@ -1,42 +1,53 @@
 @import "tailwindcss";
 
 /* =====================================================================
-   Edkonic theme tokens (approximated from edkonic-demo.vercel.app).
-   Swap values here to match the ERP exactly: every component reads these.
+   Edkonic Design Tokens (matched directly to edkonic-demo.vercel.app)
    ===================================================================== */
 :root,
-[data-theme="dark"] {
+[data-theme="dark"],
+.dark {
   --bg: #07080f;
   --bg-elev: #0d0e19;
-  --surface: rgba(255, 255, 255, 0.035);
-  --surface-hover: rgba(255, 255, 255, 0.06);
-  --border: rgba(255, 255, 255, 0.09);
+  --surface: rgba(255, 255, 255, 0.04);
+  --surface-hover: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.10);
   --text: #f5f6fa;
   --muted: #9aa0b4;
-  --pill-bg: #f4f4f9;      /* primary pill button */
+  --pill-bg: #f4f4f9;      /* primary pill button: white on dark */
   --pill-text: #0b0c16;
   --glow-a: rgba(37, 99, 235, 0.28);   /* blue glow, top right */
   --glow-b: rgba(219, 39, 119, 0.18);  /* magenta glow, bottom */
   --ok: #34d399;
   --warn: #fbbf24;
   --bad: #f87171;
+  --glass-bg: rgba(13, 14, 25, 0.72);
+  --glass-border: rgba(255, 255, 255, 0.09);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  --card-bg: rgba(255, 255, 255, 0.035);
+  --input-bg: rgba(255, 255, 255, 0.04);
 }
 
-[data-theme="light"] {
-  --bg: #f7f8fc;
+[data-theme="light"],
+.light {
+  --bg: #fbfbfe;
   --bg-elev: #ffffff;
-  --surface: rgba(10, 12, 30, 0.035);
-  --surface-hover: rgba(10, 12, 30, 0.06);
-  --border: rgba(10, 12, 30, 0.1);
+  --surface: rgba(255, 255, 255, 0.85);
+  --surface-hover: #f1f4fb;
+  --border: rgba(15, 23, 42, 0.09);
   --text: #0b0c16;
   --muted: #5b6075;
-  --pill-bg: #0b0c16;
-  --pill-text: #f7f8fc;
-  --glow-a: rgba(37, 99, 235, 0.14);
-  --glow-b: rgba(219, 39, 119, 0.10);
+  --pill-bg: #0b0c16;      /* primary pill button: dark on light */
+  --pill-text: #ffffff;
+  --glow-a: rgba(59, 130, 246, 0.12);  /* soft blue glow, top right */
+  --glow-b: rgba(236, 72, 153, 0.08);  /* soft rose/magenta glow, bottom */
   --ok: #059669;
   --warn: #b45309;
   --bad: #dc2626;
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(15, 23, 42, 0.08);
+  --glass-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+  --card-bg: #ffffff;
+  --input-bg: #ffffff;
 }
 
 @theme inline {
@@ -66,41 +77,201 @@ body {
   /* page background with the two soft glows seen on the Edkonic hero */
   .bg-glow {
     background:
-      radial-gradient(60rem 40rem at 85% 5%, var(--glow-a), transparent 60%),
-      radial-gradient(50rem 35rem at 35% 105%, var(--glow-b), transparent 60%),
+      radial-gradient(65rem 45rem at 85% 5%, var(--glow-a), transparent 60%),
+      radial-gradient(55rem 40rem at 35% 105%, var(--glow-b), transparent 60%),
       var(--bg);
   }
 
   /* big serif headings with tight tracking */
-  .display { font-family: var(--font-display); letter-spacing: -0.02em; line-height: 1.02; font-weight: 400; }
+  .display {
+    font-family: var(--font-display);
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+    font-weight: 400;
+    color: var(--text);
+  }
 
   /* gradient words inside headings */
-  .grad-blue { background: linear-gradient(90deg, #7c6cff, #3b82f6 55%, #06b6d4); -webkit-background-clip: text; background-clip: text; color: transparent; }
-  .grad-pink { background: linear-gradient(90deg, #3b82f6, #a855f7 50%, #ec4899); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .grad-blue {
+    background: linear-gradient(90deg, #3b82f6 0%, #2563eb 50%, #06b6d4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .grad-pink {
+    background: linear-gradient(90deg, #3b82f6 0%, #9333ea 50%, #ec4899 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
 
   /* pill buttons */
-  .btn { display: inline-flex; align-items: center; gap: .5rem; border-radius: 9999px; padding: .75rem 1.5rem; font-weight: 500; transition: transform .15s ease, background .15s ease, opacity .15s ease; cursor: pointer; border: 1px solid transparent; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    border-radius: 9999px;
+    padding: .75rem 1.5rem;
+    font-weight: 500;
+    transition: transform .15s ease, background .15s ease, opacity .15s ease, border-color .15s ease;
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
   .btn:active { transform: scale(.98); }
   .btn:disabled { opacity: .5; cursor: not-allowed; }
-  .btn-primary { background: var(--pill-bg); color: var(--pill-text); }
+  .btn-primary {
+    background: var(--pill-bg);
+    color: var(--pill-text);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  }
   .btn-primary:hover:not(:disabled) { opacity: .92; }
-  .btn-ghost { background: var(--surface); color: var(--text); border-color: var(--border); }
-  .btn-ghost:hover:not(:disabled) { background: var(--surface-hover); }
+  .btn-ghost {
+    background: var(--surface);
+    color: var(--text);
+    border-color: var(--border);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--surface-hover);
+  }
 
   /* glass card */
-  .glass { background: var(--surface); border: 1px solid var(--border); border-radius: 1.25rem; backdrop-filter: blur(12px); }
+  .glass {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 1.25rem;
+    backdrop-filter: blur(16px);
+    box-shadow: var(--glass-shadow);
+  }
 
   /* small pill badge, e.g. "New · AI question paper generator" */
-  .chip { display: inline-flex; align-items: center; gap: .4rem; border-radius: 9999px; padding: .3rem .8rem; font-size: .8rem; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
-  .chip-ok   { color: var(--ok);   border-color: color-mix(in srgb, var(--ok) 35%, transparent);   background: color-mix(in srgb, var(--ok) 10%, transparent); }
-  .chip-warn { color: var(--warn); border-color: color-mix(in srgb, var(--warn) 35%, transparent); background: color-mix(in srgb, var(--warn) 10%, transparent); }
-  .chip-bad  { color: var(--bad);  border-color: color-mix(in srgb, var(--bad) 35%, transparent);  background: color-mix(in srgb, var(--bad) 10%, transparent); }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    border-radius: 9999px;
+    padding: .3rem .8rem;
+    font-size: .8rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+  }
+  .chip-ok {
+    color: var(--ok);
+    border-color: color-mix(in srgb, var(--ok) 35%, transparent);
+    background: color-mix(in srgb, var(--ok) 10%, transparent);
+  }
+  .chip-warn {
+    color: var(--warn);
+    border-color: color-mix(in srgb, var(--warn) 35%, transparent);
+    background: color-mix(in srgb, var(--warn) 10%, transparent);
+  }
+  .chip-bad {
+    color: var(--bad);
+    border-color: color-mix(in srgb, var(--bad) 35%, transparent);
+    background: color-mix(in srgb, var(--bad) 10%, transparent);
+  }
 
   /* form controls */
-  .field { width: 100%; background: var(--surface); border: 1px solid var(--border); color: var(--text); border-radius: .85rem; padding: .65rem .9rem; outline: none; }
-  .field:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,.2); }
+  .field {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: .85rem;
+    padding: .65rem .9rem;
+    outline: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+  }
+  .field:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.18);
+  }
+  .field option {
+    background: var(--bg-elev);
+    color: var(--text);
+  }
 
   /* gradient progress bar */
-  .bar { height: .5rem; border-radius: 9999px; background: var(--surface); overflow: hidden; }
-  .bar > i { display: block; height: 100%; background: linear-gradient(90deg, #3b82f6, #a855f7, #ec4899); transition: width .4s ease; }
+  .bar {
+    height: .5rem;
+    border-radius: 9999px;
+    background: var(--surface-hover);
+    overflow: hidden;
+  }
+  .bar > i {
+    display: block;
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #a855f7, #ec4899);
+    transition: width .4s ease;
+  }
 }
+
+/* =====================================================================
+   Print Stylesheet (CBSE Standard Layout & PDF Pagination)
+   ===================================================================== */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 1.2cm 1.0cm 1.2cm 1.0cm;
+  }
+
+  html, body, #root {
+    height: auto !important;
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-size: 10.5pt !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Hide navigation, buttons, toast, and theme controls */
+  header,
+  nav,
+  aside,
+  button,
+  .print\:hidden,
+  [aria-label*="theme"],
+  [aria-label*="Toggle"],
+  .toast-container {
+    display: none !important;
+  }
+
+  /* Reset layout constraints so document fills printable area without clipping */
+  main,
+  .max-w-4xl,
+  .max-w-6xl,
+  .glass {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  /* Keep section heading together with its first question to prevent orphan section headers */
+  .section-wrapper,
+  .break-inside-avoid {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .print-question {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    margin-bottom: 0.65rem !important;
+  }
+
+  /* Minimize unnecessary blank gaps: avoid breaking immediately after headers */
+  h1, h2, h3, .section-header {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  /* Crisp clean print borders */
+  .border, .border-t, .border-b, .border-l, .border-r {
+    border-color: #d1d5db !important;
+  }
+}
+

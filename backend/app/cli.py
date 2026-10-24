@@ -16,9 +16,11 @@ console = Console()
 app = typer.Typer(help="Edukonic RAG Question Paper Generator CLI")
 db_app = typer.Typer(help="Database operations")
 chunks_app = typer.Typer(help="Inspect and report on chunks")
+papers_app = typer.Typer(help="Manage and export papers")
 
 app.add_typer(db_app, name="db")
 app.add_typer(chunks_app, name="chunks")
+app.add_typer(papers_app, name="papers")
 
 # ----------------- DB COMMANDS -----------------
 @db_app.command("init")
@@ -466,8 +468,18 @@ def cli_generate(
     def progress_logger(pct: int, msg: str):
         console.print(f"[{pct}%] {msg}")
 
+    from app.services.llm import GeminiDailyQuotaError
+
     with SessionLocal() as db:
-        questions, report = generate_paper_pipeline(paper_cfg, db, progress_callback=progress_logger)
+        try:
+            questions, report = generate_paper_pipeline(paper_cfg, db, progress_callback=progress_logger)
+        except GeminiDailyQuotaError as e:
+            console.print(f"\n[bold red][ERROR] {e}[/bold red]")
+            raise typer.Exit(1)
+
+        llm_usage = report.get("llm_usage", {})
+        data["llm_usage"] = llm_usage
+        data["blueprint_report"] = report
 
         # Save to database
         db_paper = Paper(
@@ -504,6 +516,21 @@ def cli_generate(
 
         console.print(f"\n[bold green][OK] Paper #{db_paper.id} saved to database![/bold green]")
 
+        # Print prominent Gemini API call and token usage
+        calls = llm_usage.get("calls", 0)
+        prompt_tok = llm_usage.get("prompt_tokens", 0)
+        comp_tok = llm_usage.get("completion_tokens", 0)
+        tot_tok = llm_usage.get("total_tokens", 0)
+        cache_hits = llm_usage.get("cache_hits", 0)
+
+        console.print(
+            f"[bold cyan]Gemini API Usage:[/bold cyan] "
+            f"[yellow]{calls}[/yellow] calls ([green]{cache_hits}[/green] cache hits) | "
+            f"[yellow]{prompt_tok:,}[/yellow] prompt tokens | "
+            f"[yellow]{comp_tok:,}[/yellow] completion tokens | "
+            f"[bold green]{tot_tok:,}[/bold green] total tokens"
+        )
+
         # Render Markdown
         md_text = render_paper_markdown(paper_cfg, questions, report)
 
@@ -527,8 +554,95 @@ def cli_generate(
         rep_table.add_row("Difficulty Split", str(report["difficulty_split"]))
         rep_table.add_row("Competency Count", f"{report['competency_count']} ({report['competency_percent']}%)")
         rep_table.add_row("Flagged Questions", str(report["flagged_count"]))
+        rep_table.add_row("Gemini API Calls", f"{calls} calls ({cache_hits} cache hits)")
+        rep_table.add_row("Gemini Tokens", f"{tot_tok:,} total ({prompt_tok:,} prompt, {comp_tok:,} comp)")
 
         console.print(rep_table)
+
+# ----------------- PAPERS COMMANDS -----------------
+@papers_app.command("export-key")
+def cli_papers_export_key(
+    paper_id: int = typer.Argument(..., help="ID of the paper to export answer key for"),
+    out: Optional[str] = typer.Option(None, "--out", "-o", help="Output DOCX file path"),
+):
+    """Export the Answer Key and Marking Scheme for a paper to a DOCX file."""
+    from app.models import Paper
+    from app.services.exporter import export_answer_key_docx
+
+    with SessionLocal() as db:
+        paper = db.query(Paper).filter(Paper.id == paper_id).first()
+        if not paper:
+            console.print(f"[bold red]Error: Paper #{paper_id} not found in database.[/bold red]")
+            raise typer.Exit(1)
+
+        questions_data = [
+            {
+                "id": q.id,
+                "slot_no": q.slot_no,
+                "section": q.section,
+                "type": q.type,
+                "marks": q.marks,
+                "chapter_no": q.chapter_no,
+                "content": q.content,
+            }
+            for q in sorted(paper.questions, key=lambda x: x.slot_no)
+        ]
+
+        paper_dict = {
+            "id": paper.id,
+            "title": paper.title,
+            "config": paper.config
+        }
+
+        stream = export_answer_key_docx(paper_dict, questions_data)
+        out_path = Path(out or f"reports/key_{paper_id}.docx").resolve()
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(out_path, "wb") as f:
+            f.write(stream.getvalue())
+
+        console.print(f"[bold green][OK] Answer key for Paper #{paper_id} exported to:[/bold green] {out_path}")
+
+@papers_app.command("export-paper")
+def cli_papers_export_paper(
+    paper_id: int = typer.Argument(..., help="ID of the paper to export question paper for"),
+    out: Optional[str] = typer.Option(None, "--out", "-o", help="Output DOCX file path"),
+):
+    """Export the Question Paper to a DOCX file."""
+    from app.models import Paper
+    from app.services.exporter import export_paper_docx
+
+    with SessionLocal() as db:
+        paper = db.query(Paper).filter(Paper.id == paper_id).first()
+        if not paper:
+            console.print(f"[bold red]Error: Paper #{paper_id} not found in database.[/bold red]")
+            raise typer.Exit(1)
+
+        questions_data = [
+            {
+                "id": q.id,
+                "slot_no": q.slot_no,
+                "section": q.section,
+                "type": q.type,
+                "marks": q.marks,
+                "chapter_no": q.chapter_no,
+                "content": q.content,
+            }
+            for q in sorted(paper.questions, key=lambda x: x.slot_no)
+        ]
+
+        paper_dict = {
+            "id": paper.id,
+            "title": paper.title,
+            "config": paper.config
+        }
+
+        stream = export_paper_docx(paper_dict, questions_data)
+        out_path = Path(out or f"reports/paper_{paper_id}.docx").resolve()
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(out_path, "wb") as f:
+            f.write(stream.getvalue())
+
+        console.print(f"[bold green][OK] Question paper #{paper_id} exported to:[/bold green] {out_path}")
 
 if __name__ == "__main__":
     app()

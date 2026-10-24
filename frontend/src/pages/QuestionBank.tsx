@@ -21,8 +21,8 @@ export const QuestionBank: React.FC = () => {
   return (
     <div className="mx-auto max-w-5xl px-6 py-10 space-y-8">
       <div className="border-b border-line pb-6">
-        <h1 className="display text-4xl text-white font-normal flex items-center gap-3">
-          <Database size={28} className="text-blue-400" />
+        <h1 className="display text-4xl text-ink font-normal flex items-center gap-3">
+          <Database size={28} className="text-blue-500 dark:text-blue-400" />
           <span>Question Bank</span>
         </h1>
         <p className="text-sm text-muted mt-1">
@@ -85,7 +85,7 @@ export const QuestionBank: React.FC = () => {
       ) : questions.length === 0 ? (
         <div className="glass p-12 text-center space-y-3">
           <Database size={32} className="mx-auto text-muted opacity-50" />
-          <h3 className="text-base font-semibold text-white">No questions found</h3>
+          <h3 className="text-base font-semibold text-ink">No questions found</h3>
           <p className="text-xs text-muted max-w-sm mx-auto">
             When you finalize a generated question paper, accepted questions will appear here automatically.
           </p>
@@ -103,7 +103,7 @@ export const QuestionBank: React.FC = () => {
                     <span className="chip text-xs font-semibold">{q.marks} Mark{q.marks > 1 ? "s" : ""}</span>
                     {q.difficulty && <span className="chip text-xs capitalize">{q.difficulty}</span>}
                     {q.competency && (
-                      <span className="chip text-xs text-sky-400 border-sky-500/30 bg-sky-500/10">
+                      <span className="chip text-xs text-sky-500 dark:text-sky-400 border-sky-500/30 bg-sky-500/10">
                         Competency
                       </span>
                     )}
@@ -113,10 +113,10 @@ export const QuestionBank: React.FC = () => {
                   </span>
                 </div>
 
-                <p className="text-sm text-gray-200 font-medium leading-relaxed">{c.stem}</p>
+                <p className="text-sm text-ink font-medium leading-relaxed">{c.stem}</p>
 
                 {c.options && Array.isArray(c.options) && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-300 pl-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pl-2">
                     {c.options.map((opt: string, i: number) => {
                       const letter = String.fromCharCode(65 + i);
                       const isCorrect = c.correct_option === letter;
@@ -124,7 +124,9 @@ export const QuestionBank: React.FC = () => {
                         <div
                           key={i}
                           className={`p-2 rounded border ${
-                            isCorrect ? "border-emerald-500/40 bg-emerald-950/20 text-emerald-300 font-semibold" : "border-line bg-black/20"
+                            isCorrect
+                              ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 font-semibold"
+                              : "border-line bg-[var(--surface)] text-ink"
                           }`}
                         >
                           ({letter}) {opt}
@@ -136,7 +138,7 @@ export const QuestionBank: React.FC = () => {
 
                 <div className="pt-2 border-t border-line text-xs text-muted flex items-center justify-between">
                   <div>
-                    <strong className="text-gray-400">Answer:</strong> {c.answer}
+                    <strong className="text-muted">Answer:</strong> <span className="text-ink">{c.answer}</span>
                   </div>
                   {c.source?.pages && (
                     <span className="italic">

@@ -30,10 +30,10 @@ export const Login: React.FC = () => {
       <div className="glass w-full max-w-md p-8 border border-line shadow-2xl relative">
         <div className="text-center mb-8">
           <span className="chip mb-4">
-            <Sparkles size={13} className="text-blue-400" />
+            <Sparkles size={13} className="text-blue-500 dark:text-blue-400" />
             <span>Teacher Authentication</span>
           </span>
-          <h1 className="display text-4xl font-normal text-white mt-2">
+          <h1 className="display text-4xl font-normal text-ink mt-2">
             Welcome to <span className="grad-blue">Edkonic</span>
           </h1>
           <p className="text-sm text-muted mt-2">
@@ -42,7 +42,7 @@ export const Login: React.FC = () => {
         </div>
 
         {error && (
-          <div className="mb-6 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-300 flex items-center gap-2">
+          <div className="mb-6 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-600 dark:text-rose-300 flex items-center gap-2">
             <AlertCircle size={15} className="shrink-0" />
             <span>{error}</span>
           </div>

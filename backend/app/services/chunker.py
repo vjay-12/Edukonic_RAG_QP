@@ -170,6 +170,15 @@ def chunk_markdown_pages(pages_data: List[Dict[str, Any]], chapter_no: int) -> L
                     current_text_blocks.append(line)
                     continue
 
+                # Drop CHAPTER banners like 'CHAPTER11 Electricity' and sentence fragments
+                if re.match(r'^CHAPTER\s*\d+', clean_heading, re.IGNORECASE):
+                    current_text_blocks.append(line)
+                    continue
+
+                if any(frag in clean_heading.lower() for frag in ["we get", "we have", "let us", "[eq.", "(eq.", "applying", "substituting", "according to"]) or clean_heading.endswith((",", ";", ":")):
+                    current_text_blocks.append(line)
+                    continue
+
                 # If we have accumulated text, save current section
                 if current_text_blocks:
                     full_sec_text = "\n".join(current_text_blocks).strip()

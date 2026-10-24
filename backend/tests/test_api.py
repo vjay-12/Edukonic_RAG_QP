@@ -95,14 +95,105 @@ def test_api_question_patch_and_finalize():
         assert len(bank_items) >= 1
 
 def test_api_export_docx():
-    # Export question paper
-    res_paper = client.get("/api/papers/1/export?part=paper")
+    # Find any saved paper from API
+    res_list = client.get("/api/papers")
+    assert res_list.status_code == 200
+    papers = res_list.json()
+    assert len(papers) > 0, "At least one saved paper must exist to test export"
+    paper_id = papers[0]["id"]
+
+    # 1. Export question paper
+    res_paper = client.get(f"/api/papers/{paper_id}/export?format=docx&part=paper")
     assert res_paper.status_code == 200
     assert res_paper.headers["content-type"] == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    # Verify DOCX zip header
+    assert f'filename="Paper_{paper_id}.docx"' in res_paper.headers.get("content-disposition", "")
     assert res_paper.content[:4] == b"PK\x03\x04"
+    # Assert python-docx opens the file cleanly without corruption
+    doc_paper = Document(io.BytesIO(res_paper.content))
+    assert len(doc_paper.paragraphs) > 0
 
-    # Export answer key
-    res_key = client.get("/api/papers/1/export?part=key")
+    # 2. Export answer key
+    res_key = client.get(f"/api/papers/{paper_id}/export?format=docx&part=key")
     assert res_key.status_code == 200
+    assert res_key.headers["content-type"] == "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    assert f'filename="Answer_Key_Paper_{paper_id}.docx"' in res_key.headers.get("content-disposition", "")
     assert res_key.content[:4] == b"PK\x03\x04"
+    # Assert python-docx opens the key cleanly without corruption
+    doc_key = Document(io.BytesIO(res_key.content))
+    assert len(doc_key.paragraphs) > 0
+
+
+def test_api_question_regenerate_mocked(monkeypatch):
+    """Verify single question regeneration endpoint with mocked LLM generation."""
+    from app.db import SessionLocal
+    from app.models import Paper, PaperQuestion
+
+    with SessionLocal() as db:
+        test_paper = Paper(
+            title="Isolated Test Paper for Regeneration",
+            config={"class": 10, "subject": "Science", "total_marks": 2},
+            status="ready",
+            progress=100
+        )
+        db.add(test_paper)
+        db.commit()
+        db.refresh(test_paper)
+
+        test_q = PaperQuestion(
+            paper_id=test_paper.id,
+            slot_no=1,
+            section="A",
+            type="vsa",
+            marks=2,
+            chapter_no=11,
+            topic="Initial Topic",
+            content={"stem": "Initial stem"},
+            status="draft"
+        )
+        db.add(test_q)
+        db.commit()
+        db.refresh(test_q)
+        test_paper_id = test_paper.id
+        test_qid = test_q.id
+
+    mock_content = {
+        "stem": "Define electric potential difference and state its SI unit.",
+        "options": None,
+        "correct_option": None,
+        "answer": "Work done per unit charge moving between two points. V = W/Q. SI unit is volt (V).",
+        "marking_scheme": [
+            {"step": "Work done per unit charge (V = W/Q)", "marks": 1},
+            {"step": "SI unit is volt", "marks": 1}
+        ],
+        "topic": "Electric Potential",
+        "concept_key": "potential_difference",
+        "source": {"chunk_ids": [561], "pages": [178]}
+    }
+    mock_val = {"verdict": "pass", "issues": []}
+    mock_embs = [[0.1] * 768]
+    mock_key = "potential_difference"
+    mock_rxns = []
+    mock_tags = ["potential_difference"]
+
+    monkeypatch.setattr(
+        "app.api.papers.generate_single_slot",
+        lambda **kwargs: (mock_content, mock_val, mock_embs, mock_key, mock_rxns, mock_tags)
+    )
+
+    try:
+        regen_res = client.post(
+            f"/api/papers/{test_paper_id}/questions/{test_qid}/regenerate",
+            json={"instruction": "Focus on mathematical definition and SI unit."}
+        )
+        assert regen_res.status_code == 200
+        data = regen_res.json()
+        assert data["status"] == "ok"
+        assert data["question"]["id"] == test_qid
+        assert "Define electric potential difference" in data["question"]["content"]["stem"]
+    finally:
+        with SessionLocal() as db:
+            db.query(PaperQuestion).filter(PaperQuestion.paper_id == test_paper_id).delete()
+            db.query(Paper).filter(Paper.id == test_paper_id).delete()
+            db.commit()
+
+

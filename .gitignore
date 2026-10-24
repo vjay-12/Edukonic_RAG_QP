@@ -8,6 +8,8 @@ __pycache__/
 *.pyc
 .pytest_cache/
 .ruff_cache/
+.cache/
+**/.cache/
 
 # node
 node_modules/

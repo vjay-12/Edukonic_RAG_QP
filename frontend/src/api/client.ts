@@ -265,3 +265,52 @@ export async function fetchQuestionBank(filters?: {
   if (!res.ok) throw new Error("Failed to load question bank");
   return res.json();
 }
+
+export async function downloadPaperDocx(
+  paperId: number | string,
+  part: "paper" | "key" = "paper"
+): Promise<string> {
+  const url = `${API_BASE}/papers/${paperId}/export?format=docx&part=${part}`;
+  const res = await fetch(url);
+
+  if (!res.ok) {
+    let errMsg = `Export failed with status ${res.status}`;
+    try {
+      const data = await res.json();
+      if (data && data.detail) {
+        errMsg = typeof data.detail === "string" ? data.detail : JSON.stringify(data.detail);
+      }
+    } catch {
+      try {
+        const text = await res.text();
+        if (text) errMsg = text;
+      } catch {
+        // fallback
+      }
+    }
+    throw new Error(errMsg);
+  }
+
+  // Determine filename from Content-Disposition header or fallback
+  let filename = part === "key" ? `Answer_Key_Paper_${paperId}.docx` : `Paper_${paperId}.docx`;
+  const disposition = res.headers.get("content-disposition");
+  if (disposition) {
+    const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+    if (match && match[1]) {
+      filename = match[1].replace(/['"]/g, "").trim();
+    }
+  }
+
+  const blob = await res.blob();
+  const blobUrl = window.URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = blobUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  window.URL.revokeObjectURL(blobUrl);
+
+  return filename;
+}
+
